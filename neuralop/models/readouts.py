@@ -1,4 +1,4 @@
-from typing import Literal, Sequence
+from typing import Literal, Optional, Sequence, Union
 
 import torch
 import torch.nn as nn
@@ -17,10 +17,10 @@ class ResolutionInvariantReadout(nn.Module):
         in_channels: int,
         out_dim: int,
         reduce: Literal["mean", "integral"] = "mean",
-        measure_per_dim: float | Sequence[float] | None = None,
+        measure_per_dim: Optional[Union[float, Sequence[float]]] = None,
         head: Literal["linear", "mlp"] = "linear",
-        mlp_hidden_dim: int | None = None,
-        activation: nn.Module | None = None,
+        mlp_hidden_dim: Optional[int] = None,
+        activation: Optional[nn.Module] = None,
     ):
         super().__init__()
 
