@@ -4,13 +4,17 @@ import torch
 from neuralop.models import FNO, ResolutionInvariantReadout
 
 
+@pytest.mark.parametrize("n_dim", [1, 2, 3])
 @pytest.mark.parametrize("reduce", ["mean", "integral"])
-def test_fno_resolution_invariant_readout_shapes(reduce):
+def test_fno_resolution_invariant_readout_shapes(reduce, n_dim):
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     out_dim = 7
+    n_modes = (8,) * n_dim
+    shape_1 = (12,) * n_dim
+    shape_2 = (16,) * n_dim
     model = FNO(
-        n_modes=(8, 8),
+        n_modes=n_modes,
         in_channels=2,
         out_channels=4,
         hidden_channels=12,
@@ -19,25 +23,28 @@ def test_fno_resolution_invariant_readout_shapes(reduce):
             in_channels=4,
             out_dim=out_dim,
             reduce=reduce,
-            measure_per_dim=[1.0, 1.0],
+            measure_per_dim=[1.0] * n_dim,
         ),
     ).to(device)
 
-    x_16 = torch.randn(3, 2, 16, 16, device=device)
-    x_32 = torch.randn(3, 2, 32, 32, device=device)
+    x_1 = torch.randn(3, 2, *shape_1, device=device)
+    x_2 = torch.randn(3, 2, *shape_2, device=device)
 
-    y_16 = model(x_16)
-    y_32 = model(x_32)
+    y_1 = model(x_1)
+    y_2 = model(x_2)
 
-    assert y_16.shape == (3, out_dim)
-    assert y_32.shape == (3, out_dim)
+    assert y_1.shape == (3, out_dim)
+    assert y_2.shape == (3, out_dim)
 
 
-def test_fno_resolution_invariant_readout_backward():
+@pytest.mark.parametrize("n_dim", [1, 2, 3])
+def test_fno_resolution_invariant_readout_backward(n_dim):
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
+    n_modes = (8,) * n_dim
+    shape = (12,) * n_dim
     model = FNO(
-        n_modes=(8, 8),
+        n_modes=n_modes,
         in_channels=2,
         out_channels=4,
         hidden_channels=12,
@@ -51,7 +58,7 @@ def test_fno_resolution_invariant_readout_backward():
         ),
     ).to(device)
 
-    x = torch.randn(4, 2, 16, 16, device=device)
+    x = torch.randn(4, 2, *shape, device=device)
     target = torch.randn(4, 5, device=device)
 
     out = model(x)
