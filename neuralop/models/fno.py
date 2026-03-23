@@ -43,6 +43,10 @@ class FNO(BaseModel, name="FNO"):
         Number of channels in input function. Determined by the problem.
     out_channels : int
         Number of channels in output function. Determined by the problem.
+    readout : nn.Module, optional
+        Optional module applied after the projection layer to map field outputs
+        of shape ``(B, C, *spatial)`` to task-specific outputs (e.g., scalar or
+        vector quantities of interest). If ``None``, returns the projected field.
     hidden_channels : int
         Width of the FNO (i.e. number of channels).
         This significantly affects the number of parameters of the FNO.
