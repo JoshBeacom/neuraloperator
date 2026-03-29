@@ -239,3 +239,18 @@ def test_fno_complex_data_with_readout_raises():
             complex_data=True,
             readout=ResolutionInvariantReadout(in_channels=4, out_dim=1),
         )
+
+
+@pytest.mark.parametrize("n_dim", [1, 2, 3])
+def test_fno_without_readout_preserves_field_output_shape(n_dim):
+    model = FNO(
+        n_modes=(8,) * n_dim,
+        in_channels=2,
+        out_channels=5,
+        hidden_channels=12,
+        n_layers=2,
+        readout=None,
+    )
+    x = torch.randn(3, 2, *([16] * n_dim))
+    y = model(x)
+    assert y.shape == (3, 5, *([16] * n_dim))
