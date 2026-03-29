@@ -166,6 +166,26 @@ Codomain Attention Neural Operators (CODANO)
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+.. _readouts_api:
+
+Readouts
+--------
+
+Modules for mapping spatial field outputs ``(B, C, *spatial)`` to
+task-specific scalars or vectors (e.g. scalar quantities of interest).
+
+.. automodule:: neuralop.models.readouts
+    :no-members:
+    :no-inherited-members:
+
+.. autosummary::
+    :toctree: generated
+    :template: class.rst
+
+    ResolutionInvariantReadout
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 .. raw:: html
 
    <hr style="margin: 4em 0; border: none; border-top: 2px solid #e0e0e0;">
