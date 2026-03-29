@@ -1,5 +1,5 @@
 from functools import partialmethod
-from typing import Tuple, List, Union, Literal
+from typing import Optional, Tuple, List, Union, Literal
 
 Number = Union[float, int]
 
@@ -142,6 +142,10 @@ class FNO(BaseModel, name="FNO"):
         frequency and Nyquist frequency are real-valued before calling irfft. When False,
         relies on cuFFT's irfftn to handle symmetry automatically, which may fail on
         certain GPUs or input sizes, causing line artifacts. By default True.
+    readout : nn.Module, optional
+        Optional module applied after the projection layer to map field outputs
+        of shape ``(B, C, *spatial)`` to task-specific outputs (e.g., scalar or
+        vector quantities of interest). If ``None``, returns the projected field.
 
     Examples
     --------
@@ -183,7 +187,9 @@ class FNO(BaseModel, name="FNO"):
         use_channel_mlp: bool = True,
         channel_mlp_dropout: float = 0,
         channel_mlp_expansion: float = 0.5,
-        channel_mlp_skip: Literal["linear", "identity", "soft-gating", None] = "soft-gating",
+        channel_mlp_skip: Literal[
+            "linear", "identity", "soft-gating", None
+        ] = "soft-gating",
         fno_skip: Literal["linear", "identity", "soft-gating", None] = "linear",
         resolution_scaling_factor: Union[Number, List[Number]] = None,
         domain_padding: Union[Number, List[Number]] = None,
@@ -199,9 +205,20 @@ class FNO(BaseModel, name="FNO"):
         preactivation: bool = False,
         conv_module: nn.Module = SpectralConv,
         enforce_hermitian_symmetry: bool = True,
+        readout: Optional[nn.Module] = None,
     ):
         if decomposition_kwargs is None:
             decomposition_kwargs = {}
+        if complex_data and readout is not None:
+            raise ValueError(
+                "readout is not supported with complex_data=True. "
+                "The projection layer outputs a complex tensor, so the readout "
+                "would need to collapse it to real values — but the right approach "
+                "depends on your use case. Wrap your input or the projection output "
+                "explicitly before passing to a readout, for example: "
+                "x.real (real part only), x.abs() (modulus field then pool), or "
+                "x.mean(spatial_dims).abs() (pool then take modulus)."
+            )
         super().__init__()
         self.n_dim = len(n_modes)
 
@@ -233,6 +250,7 @@ class FNO(BaseModel, name="FNO"):
         self.preactivation = preactivation
         self.complex_data = complex_data
         self.fno_block_precision = fno_block_precision
+        self.readout = readout
 
         ## Positional embedding
         if positional_embedding == "grid":
@@ -392,6 +410,9 @@ class FNO(BaseModel, name="FNO"):
             x = self.domain_padding.unpad(x)
 
         x = self.projection(x)
+
+        if self.readout is not None:
+            x = self.readout(x)
 
         return x
 
