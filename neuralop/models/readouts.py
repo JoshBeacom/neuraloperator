@@ -29,11 +29,8 @@ class ResolutionInvariantReadout(nn.Module):
         ``reduce="integral"``.  If a scalar, the domain volume is
         ``measure_per_dim ** n_spatial_dims``.  If a sequence, its length
         must match the number of spatial dimensions and the domain volume is
-        the product of the entries.  Defaults to ``1.0``.
-
-        For non-cubic domains pass a sequence with one entry per dimension,
-        e.g. ``measure_per_dim=[Lx, Ly, Lz]`` for a box of side-lengths
-        *Lx*, *Ly*, *Lz* in Å (or any consistent length unit).
+        the product of the entries (e.g., pass ``[Lx, Ly, Lz]`` for a
+        non-cubic 3-D domain).  Defaults to ``1.0``.
     head : {"linear", "mlp"}, optional
         Projection head applied after pooling.  ``"linear"`` uses a single
         ``nn.Linear``; ``"mlp"`` uses a two-layer MLP with an activation.
@@ -79,6 +76,8 @@ class ResolutionInvariantReadout(nn.Module):
         # invalidate the cached product or dimension checks.
         if isinstance(measure_per_dim, (float, int)):
             self.measure_per_dim = float(measure_per_dim)
+            # Sentinel for the scalar path in _measure_product(): use pow(n_dims)
+            # rather than per-dimension product.
             self._measure_scalar = self.measure_per_dim
             self.register_buffer(
                 "_measure_buffer",
